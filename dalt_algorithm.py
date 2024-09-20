@@ -8,9 +8,31 @@ import argparse
 import numpy as np
 from PIL import Image
 import torch
+from torch import Tensor
 
 from utils import collate_fn, Dataset, simulation_func
-from process import run_ma, run_o_ma
+from process import run_ma, run_o_ma, ProcessedData
+
+
+def local_change_range(img, percentile=98):
+    max_channel = np.max(img, axis=2)
+    percentile_98 = np.percentile(max_channel, percentile)
+    divisor =percentile_98
+    normalized_dichros = np.clip(img / divisor, 0, 1)
+    return normalized_dichros, divisor
+
+
+def achromatic_modification(procesed_data: list[ProcessedData]) -> list[ProcessedData]:
+    for data in procesed_data:
+        w_mark = data["watermark"].copy()
+        w_mark -= w_mark.min()
+        u = data["original"].transpose(1, 2, 0)
+        dichros = u * np.stack([w_mark, w_mark, w_mark], axis=2)
+
+        tm_dichros, div = local_change_range(dichros, 98)
+        data["daltonized"] = tm_dichros
+    return procesed_data
+
 
 def parse_args():
     parser = argparse.ArgumentParser("Compute Dalt algorithm using watermark approach on set of images")
@@ -98,15 +120,29 @@ def _main(input_path, path_to_out_files, batch_size,
     if stage == 'ma':
         print("Starting ma..")
         out_path = os.path.join(path_to_out_files, f'{sim_func_name}.{cvdtype}.lr_{LR}.{sign_guide}_ma.eps_{eps}.avg_v_fill_{avg_v_fill}.bias_{px_bias}')
-        run_ma(dataloader, DEVICE, out_path, opt_name, eps, 
+        res = run_ma(dataloader, DEVICE, out_path, opt_name, eps, 
                num_epochs, sign_guide, avg_v_fill, sim_func, 
                sim_func_name, px_bias, cvdtype, len(dataset), h_max, 
                w_max, method=method, thresh=0, LR=LR)
     elif stage == 'o_ma':
         print("Starting o_ma..")
         out_path = os.path.join(path_to_out_files, f'{sim_func_name}.{cvdtype}.lr_{LR}.{sign_guide}_o_ma.eps_{eps}.avg_v_fill_{avg_v_fill}.bias_{px_bias}')
-        run_o_ma(dataloader, DEVICE, ma_path, out_path, opt_name, eps,
+        res = run_o_ma(dataloader, DEVICE, ma_path, out_path, opt_name, eps,
             num_epochs, sim_func, sim_func_name, px_bias, len(dataset), h_max, w_max, LR=LR)
+    
+    dataset_processed = achromatic_modification(res)
+
+
+    # breakpoint()
+    import matplotlib.pyplot as plt
+    for image_set in dataset_processed:
+        daltonized_sim = sim_func(torch.tensor(image_set["daltonized"]).to(DEVICE)).cpu().numpy()
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(ncols=4)
+        ax1.imshow(image_set["original"].transpose(1,2,0))
+        ax2.imshow(image_set["original_sim"])
+        ax3.imshow(image_set["daltonized"])
+        ax4.imshow(daltonized_sim)
+        plt.show()
 
 
 if __name__ == "__main__":
