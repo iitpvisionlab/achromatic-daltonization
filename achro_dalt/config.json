@@ -1,0 +1,24 @@
+{
+    "loss": {
+        "name": "reduced_problem_optimization",
+        "pixel_bias": 1,
+        "sign_guide": "l",
+        "avg_ma": 0.8,
+        "eps": 0.015
+    },
+    "optimizer": {
+        "name": "Adam",
+        "learning_rate": 0.0001
+    },
+    "simulation": {
+        "name": "Vienot",
+        "cvd_type": "protan"
+    },
+    "dataset_path": "../../dataset_1",
+    "batch_size": 21,
+    "save_dir": "../../results",
+    "epochs": 10000,
+    "gap": 1e-8,
+    "cuda": 0
+
+}

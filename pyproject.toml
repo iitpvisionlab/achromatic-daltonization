@@ -1,0 +1,49 @@
+[project]
+name = "achro_dalt"
+dynamic = ["version"]
+authors = [
+  { name="Dmitry Sidorchuk", email="ds-sidorchuk@yandex.ru" },
+  { name="Maria Pavlova", email="pavlovamar96@yandex.ru" },
+]
+description = "Achromatic-component-based daltonization method preserving naturalness for both CVD and normal vision."
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Typing :: Typed",
+]
+dependencies = [
+  "setuptools==69.0.3",
+  "colour==0.1.5",
+  "numpy<2",
+  "pillow==11.3.0",
+  "pydantic==2.11.7",
+  "torch==2.4.0",
+  "torchvision==0.19.0",
+  "tqdm==4.64.1",
+
+]
+
+[project.urls]
+"Homepage" = "https://github.com/iitpvisionlab/achromatic-daltonization"
+"Bug Reports" = "https://github.com/iitpvisionlab/achromatic-daltonization/issues"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 79
+target-version = ["py310"]
+
+[tool.setuptools.packages.find]
+include = ["achro_dalt*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "achro_dalt.__version__"}
+
+[tool.coverage.run]
+source = ["."]
